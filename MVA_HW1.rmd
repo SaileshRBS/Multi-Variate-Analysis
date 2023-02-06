@@ -1,0 +1,47 @@
+---
+title: " MVA_HW_1"
+author: "sp2245@scarletmail.rutgers.edu"
+date: "2/6/2023"
+output: html_document
+---
+  
+```{r}
+library(readr)
+Bumpus_sparrows <- read_csv("C:/Users/saile/Downloads/Bumpus_sparrows.csv")
+sparr <- Bumpus_sparrows
+sparr
+sparr <- as.data.frame(sparr)
+
+###Taking the sparr data which is in tibble form and converted into a dataframe###
+
+  #Column Means
+colMeans(subset(sparr, Survivorship == "NS")[,c("Total_length","Alar_extent","L_beak_head","L_humerous","L_keel_sternum")])
+
+###Using the sparr dataset when applied colmeans to the subset and to the column " Survivorship" , by only considering "NS" type in that column and you can see that the highest means for a partucular column is for "Alar_extent" and least is for " L_humerous"### 
+
+colMeans(subset(sparr, Survivorship == "S")[,c("Total_length","Alar_extent","L_beak_head","L_humerous","L_keel_sternum")])
+
+###Using the sparr dataset when applied colmeans to the subset and to the column " Survivorship" , by only considering "S" type in that column# and when  applied colmeans to it the highest means for a partucular column is for "Alar_extent" and least is for " L_humerous## 
+
+
+  #Correlation
+cor(subset(sparr, Survivorship == "NS")[,c("Total_length","Alar_extent","L_beak_head","L_humerous","L_keel_sternum")])
+
+### When correlation is applied to  the dataset by whcih we can observe  which two columns are closely related to eachother. First, we have applied it for 'NS' and the columns mentioned in the dataset.The highest correlation is between " L_beak_head" and " L_humerous" which is 0.83 and the lowest correlation is between "L_ keel_sternum " and "L_beak_head" which is 0.56###
+
+cor(subset(sparr, Survivorship == "S")[,c("Total_length","Alar_extent","L_beak_head","L_humerous","L_keel_sternum")])
+
+### When correlation is applied to  the dataset by whcih we can observe  which two columns are closely related to eachother. First, we have applied it for 'S' and the columns mentioned in the dataset.The highest correlation is between "Alar_extent" and " L_humerous" which is 0.74 and the lowest correlation is between "L_ keel_sternum " and "Alar_extent" which is 0.27###
+
+
+#Covariance
+cov(subset(sparr, Survivorship == "NS")[,c("Total_length","Alar_extent","L_beak_head","L_humerous","L_keel_sternum")])
+
+### When covariance is applied to  the dataset by whcih we can observe  which two columns are closely related to eachother. First, we have applied it for 'NS' and the columns mentioned in the dataset.The highest covariance  is between "Total_length" and "Alar_extent" which is 17.19 and the lowest covariance is between "L_humerous " and "L_beak_head" which is 0.46###
+
+cov(subset(sparr, Survivorship == "S")[,c("Total_length","Alar_extent","L_beak_head","L_humerous","L_keel_sternum")])
+
+### When covariance is applied to  the dataset by whcih we can observe  which two columns are closely related to eachother. First, we have applied it for 'S' and the columns mentioned in the dataset.The highest covariance is between "Alar_extent" and " L_beak_head" which is 1.91 and the lowest covariance is between "L_ keel_sternum " and "L_beak_head" which is 0.23###
+
+```
+
