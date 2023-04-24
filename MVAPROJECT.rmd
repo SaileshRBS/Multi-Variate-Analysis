@@ -1,0 +1,320 @@
+---
+title: "MVA_PROJECT "
+author: "sp2245@scarletmail.rutgers.edu"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# Factor Analysis
+
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(stringr)
+library(ellipse)
+library(ggplot2)
+library(reshape2)
+library(caret)
+library(pROC)
+library(cluster)
+library(factoextra)
+library(psych)
+library(MASS)
+
+HD2<- read_csv("C:/Users/saile/Downloads/Heart_Disease3.csv")
+
+HD21<-na.omit(HD2)
+attach(HD21)
+HD21[1]
+fit.pc <- principal(HD21[-1], nfactors=4, rotate="varimax")
+fit.pc
+round(fit.pc$values, 3)
+fit.pc$loadings
+# Loadings with more digits
+for (i in c(1,3,2,4)) { print(fit.pc$loadings[[1,i]])}
+# Communalities
+fit.pc$communality
+# Rotated factor scores, Notice the columns ordering: RC1, RC3, RC2 and RC4
+fit.pc$scores
+# Play with FA utilities
+
+fa.parallel(HD21[-1]) # See factor recommendation
+fa.plot(fit.pc) # See Correlations within Factors
+fa.diagram(fit.pc) # Visualize the relationship
+vss(HD21[-1]) # See Factor recommendations for a simple structure
+
+## RC1: This is trying to tell us that these columns diaBP, sysBP, prevalentHyp, BMI and heartRate are giving me the data related to heart.
+##	RC2: The columns cigsPerDay,currentSmoker is showing data related to consumptions of cigarettes per day of an individual.
+##	RC3: HeartDisease , totChol,BPmeds column are giving data related to the factors which can affect heart issues or health problems related to heart.
+##	RC4: diabetes, glucose these columns are related to problem sugar in an individual which can affect the heart and cause HeartDisease.
+
+```
+
+
+
+```{r}
+
+# Computing Correlation Matrix
+corrm.heart <- cor(HD21[-1])
+corrm.heart
+plot(corrm.heart)
+HD21_pca <- prcomp(HD21[-1], scale=TRUE)
+summary(HD21_pca)
+plot(HD21_pca)
+# A table containing eigenvalues and %'s accounted, follows. Eigenvalues are the sdev^2
+(eigen_HD21 <- round(HD21_pca$sdev^2,3))
+round(fit.pc$values, 3)
+names(eigen_HD21) <- paste("PC",1:14,sep="")
+eigen_HD21
+sumlambdas <- sum(eigen_HD21)
+sumlambdas
+propvar <- round(eigen_HD21/sumlambdas,2)
+propvar
+plot(propvar)
+cumvar_HD21 <- cumsum(propvar)
+cumvar_HD21
+plot(cumvar_HD21)
+matlambdas <- rbind(eigen_HD21,propvar,cumvar_HD21)
+matlambdas
+rownames(matlambdas) <- c("Eigenvalues","Prop. variance","Cum. prop. variance")
+rownames(matlambdas)
+eigvec.HD21 <- HD21_pca$rotation
+print(HD21_pca)
+pcafactors.HD21 <- eigvec.HD21[,1:14]
+pcafactors.HD21
+# Multiplying each column of the eigenvector’s matrix by the square-root of the corresponding eigenvalue in order to get the factor loadings
+unrot.fact.HD21 <- sweep(pcafactors.HD21,MARGIN=2,HD21_pca$sdev[1:14],`*`)
+unrot.fact.HD21
+# Computing communalities
+communalities.HD21 <- rowSums(unrot.fact.HD21^2)
+communalities.HD21
+# Performing the varimax rotation. The default in the varimax function is norm=TRUE thus, Kaiser normalization is carried out
+rot.fact.HD21 <- varimax(unrot.fact.HD21)
+rot.fact.HD21
+# The print method of varimax omits loadings less than abs(0.1). In order to display all the loadings, it is necessary to ask explicitly the contents of the object $loadings
+fact.load.HD21 <- rot.fact.HD21$loadings[1:14,1:14]
+fact.load.HD21
+
+
+
+```
+
+```{r}
+###Cluster Analysis###
+
+# Distance measure
+EFA<-as.data.frame(fit.pc$score)
+
+# Scaling
+set.seed(123)
+matstd_EFA <- scale(EFA)
+
+# Kmeans
+kmeans.EFA <- kmeans(matstd_EFA,2, nstart = 25)
+
+# Clustering
+fviz_cluster(kmeans.EFA, data = matstd_EFA,
+             ellipse.type = "convex",
+             palette = "jco",
+             ggtheme = theme_minimal())
+#	From the above plot we can see that there are many points formed in to 2 clusters 1 and cluster 2.
+#	But we can’t which cluster and its points determine Heart Disease.
+#For a better understanding we perform confusion matrix for the above plot.
+
+
+predicted_lc <- ifelse(kmeans.EFA$cluster > 1.5, "No", "Yes")
+actual_lc <- ifelse(HD21$HeartDisease == 1, "Yes", "No")
+confusion_lc <- table(predicted_lc, actual_lc)
+confusion_lc
+
+#Based on the confusion matrix and also considering the RC values of the columns mentioned earlier there are 277 individuals who are affected with Heart Disease and 1492 who are not affected with heart disease. But the Predicted model says 1959 was wrongly predicted.
+
+
+```
+
+
+
+```{r}
+# Logistic Regression
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(devtools)
+library(cluster)
+library(magrittr)
+library(NbClust)
+library(MASS)
+library(gvlma)
+library(leaps)
+library(relaimpo)
+library(e1071)
+library(pROC)
+library(memisc)
+library(ROCR)
+library(klaR)
+library(caret)
+library(caTools)
+
+HD3<- read_csv("C:/Users/saile/Downloads/Heart_Disease3.csv")
+
+summary(HD3)
+HD3$male <- as.factor(HD3$male)
+HD3$education<-as.factor(HD3$education)
+HD3$currentSmoker<-as.factor(HD3$currentSmoker)
+HD3$BPMeds<-as.factor(HD3$BPMeds)
+HD3$prevalentHyp<-as.factor(HD3$prevalentHyp)
+HD3$diabetes<-as.factor(HD3$diabetes)
+str(HD3)
+```
+
+
+ 
+
+
+```{r}
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(devtools)
+library(cluster)
+library(magrittr)
+library(NbClust)
+library(MASS)
+library(gvlma)
+library(leaps)
+library(relaimpo)
+library(e1071)
+library(pROC)
+library(memisc)
+library(ROCR)
+library(klaR)
+library(caret)
+library(caTools)
+# Let's try to predict the Heart Disease using the prediction
+
+set.seed(123)
+split <- sample.split(HD3$HeartDisease, SplitRatio = 0.70)
+train_lc <- subset(HD3, split == TRUE)
+test_lc <- subset(HD3, split == FALSE)
+
+Xtrain_lc <- train_lc[, 1:14]
+Ytrain_lc <- train_lc[, 15]
+Ytrain_lc <- unlist(Ytrain_lc)
+Ytrain_lc <- as.integer(Ytrain_lc)
+
+Xtest_lc <- test_lc[, 1:14]
+x_lc <- cbind(Xtrain_lc, Ytrain_lc)
+logistic_lc <- glm(Ytrain_lc ~ ., data = x_lc, family = 'binomial')
+
+summary(logistic_lc)
+
+# for reproducibility
+set.seed(1234) 
+probabilities_lc <- predict(logistic_lc, newdata = Xtest_lc, type = "response")
+
+predicted_lc <- ifelse(probabilities_lc > 0.5, "Yes", "No")
+actual_lc <- ifelse(test_lc$HeartDisease == 1, "Yes", "No")
+confusion_lc <- table(predicted_lc, actual_lc)
+confusion_lc
+
+##	We use the confusion matrix to predict the values of the individuals who are affected with heart diseases.
+##From the above code we can conclude that there are 961 individuals who are not affected with heart disease  and 13 are affected with heart Disease.
+##	974 records were correctly predicted.
+##	158 records were wrongly predicted.
+##	153 records having heart disease were predicted as not having heart disease.
+##	5 records not having heart disease were predicted as having heart disease.
+
+
+roc_lc <- roc(test_lc$HeartDisease, probabilities_lc)
+auc_lc <- auc(roc_lc)
+auc_lc
+ggroc(roc_lc, color = "blue", legacy.axes = TRUE) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "False Positive Rate", y = "True Positive Rate",
+       title = paste("ROC Curve (AUC = ", round(auc_lc, 2), ")")) +
+  annotate("text", x = 0.5, y = 0.5, label = paste0("AUC = ", round(auc_lc, 2)))
+
+## 	From the above plot we see the dataset accuracy is 0.72(72%). We can say that the predicted was not accurate to the mark basing on the confusion matrix mentioned above and needs more improvement in prediction.
+```
+
+
+
