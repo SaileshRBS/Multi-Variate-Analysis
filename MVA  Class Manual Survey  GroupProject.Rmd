@@ -1,0 +1,275 @@
+---
+title: "MVA Group Project"
+author: "sp2245@scarletmail.rutgers.edu"
+output: html_document
+---
+
+
+
+```{r}
+# Factor Analysis
+
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(stringr)
+library(ellipse)
+library(ggplot2)
+library(reshape2)
+library(caret)
+library(pROC)
+library(cluster)
+library(factoextra)
+library(psych)
+library(MASS)
+
+class<- read_csv("C:/Users/saile/Downloads/Class_Survey.csv")
+attach(class)
+
+
+fit.pc <- principal(class[3:13], nfactors=4, rotate="varimax")
+fit.pc
+round(fit.pc$values, 3)
+fit.pc$loadings
+# Loadings with more digits
+for (i in c(1,3,2,4)) { print(fit.pc$loadings[[1,i]])}
+# Communalities
+fit.pc$communality
+# Rotated factor scores, Notice the columns ordering: RC1, RC3, RC2,RC4
+fit.pc$scores
+fa.plot(fit.pc) # See Correlations within Factors
+fa.diagram(fit.pc) # Visualize the relationship
+
+## All the Columns are categorized in to RC1, RC2 , RC3 and  RC4.
+##RC1 contains  WeChat ,TikTok , Whatsapp .
+##RC2 contains Instgram, Telegram and Linkedlin.
+##RC3 contains Twitter , Facebook/Messenger, Messages. 
+##RC4 contains BeReal, Snapchat.
+
+
+```
+
+
+
+```{r}
+###Cluster Analysis###
+
+# Distance measure
+EFA_class<-as.data.frame(fit.pc$score)
+
+# Scaling
+set.seed(123)
+matstd_EFA_class <- scale(EFA_class)
+
+# Kmeans
+kmeans.EFA_class <- kmeans(matstd_EFA_class,2, nstart = 25)
+
+# Clustering
+fviz_cluster(kmeans.EFA_class, data = matstd_EFA_class,
+             ellipse.type = "convex",
+             palette = "jco",
+             ggtheme = theme_minimal())
+
+predicted_cs <- ifelse(kmeans.EFA_class$cluster > 1.5, "Not Addicted", "Addicted")
+actual_cs <- ifelse(class$SocialMediaAddiction == "Addicted" , "Addicted", "Not Addicted")
+confusion_cs <- table(predicted_cs, actual_cs)
+confusion_cs
+
+## 	From the above plot we can see that there are many points formed in to 2 clusters 1 and cluster 2.
+##But we can’t which cluster and its points determine Social Media Addiction
+##For a better understanding we perform confusion matrix for the above plot.
+##We can see that out of 100 it has predicted 1 as Addicted and 99 as Not Addicted.
+
+
+```
+
+
+```{r}
+# Logistic Regression
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(devtools)
+library(cluster)
+library(magrittr)
+library(NbClust)
+library(MASS)
+library(gvlma)
+library(leaps)
+library(relaimpo)
+library(e1071)
+library(pROC)
+library(memisc)
+library(ROCR)
+library(klaR)
+library(caret)
+library(caTools)
+
+
+
+summary(class)
+
+class$SocialMediaAddiction<-as.factor(class$SocialMediaAddiction)
+str(class)
+```
+
+
+ 
+
+
+```{r}
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(devtools)
+library(cluster)
+library(magrittr)
+library(NbClust)
+library(MASS)
+library(gvlma)
+library(leaps)
+library(relaimpo)
+library(e1071)
+library(pROC)
+library(memisc)
+library(ROCR)
+library(klaR)
+library(caret)
+library(caTools)
+# Let's try to predict the Social Media Addiction using the prediction
+
+set.seed(123)
+split <- sample.split(class$SocialMediaAddiction, SplitRatio = 0.70)
+train_cs <- subset(class, split == TRUE)
+test_cs <- subset(class, split == FALSE)
+
+Xtrain_cs <- train_cs[, 1:14]
+Ytrain_cs <- train_cs[, 15]
+Ytrain_cs <- unlist(Ytrain_cs)
+#Ytrain_cs <- as.integer(Ytrain_cs)
+
+Xtest_cs <- test_cs[, 1:14]
+x_cs <- cbind(Xtrain_cs, Ytrain_cs)
+logistic_cs <- glm(Ytrain_cs ~ ., data = x_cs, family = 'binomial')
+
+summary(logistic_cs)
+
+
+
+# for reproducibility
+set.seed(1234) 
+probabilities_cs <- predict(logistic_cs, newdata = Xtest_cs, type = "response")
+
+predicted_cs <- ifelse(probabilities_cs > 0.5, "Addicted", "Not Addicted")
+actual_cs <- ifelse(test_cs$SocialMediaAddiction== "Addicted", "Addicted", "Not Addicted")
+confusion_cs <- table(predicted_cs, actual_cs)
+confusion_cs
+TP <- sum(actual_cs == 'Addicted' & predicted_cs == 'Addicted')
+FP <- sum(actual_cs == 'Not Addicted' & predicted_cs == 'Addicted')
+TN <- sum(actual_cs == 'Not Addicted' & predicted_cs == 'Not Addicted')
+FN <- sum(actual_cs == 'Addicted' & predicted_cs == 'Not Addicted')
+
+recall <- TP / (TP + FN)
+precision <- TP / (TP + FP)
+
+recall
+precision
+
+ ##	We use the confusion matrix to predict the values of the individuals who are Addicted and Not Addicted.
+## 	We can see that the prediction shows 7 as Addicted and 23 as Not Addicted.
+##The Recall shows 23% and Precision as 31%. This shows us the prediction model is not up to the mark.
+
+roc_cs <- roc(test_cs$SocialMediaAddiction, probabilities_cs)
+auc_cs <- auc(roc_cs)
+auc_cs
+ggroc(roc_cs, color = "blue", legacy.axes = TRUE) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "False Positive Rate", y = "True Positive Rate",
+       title = paste("ROC Curve (AUC = ", round(auc_cs, 2), ")")) +
+  annotate("text", x = 0.5, y = 0.5, label = paste0("AUC = ", round(auc_cs, 2)))
+
+##From the above plot we see the dataset accuracy is 0.77(77%). We can say that the predicted was not accurate to the mark basing on the confusion matrix mentioned above and needs more improvement in prediction.
+
+```
+
+
+
+
+
